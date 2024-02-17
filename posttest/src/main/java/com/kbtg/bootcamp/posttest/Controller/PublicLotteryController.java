@@ -1,25 +1,20 @@
-package com.kbtg.bootcamp.posttest.lottery;
+package com.kbtg.bootcamp.posttest.Controller;
 
 
-import jakarta.validation.Valid;
+import com.kbtg.bootcamp.posttest.lottery.Lottery;
+import com.kbtg.bootcamp.posttest.lottery.LotteryService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/lotteries")
-public class LotteryController {
+public class PublicLotteryController {
 
     private final LotteryService lotteryService;
 
-    public LotteryController (LotteryService lotteryService) {
+    public PublicLotteryController(LotteryService lotteryService) {
         this.lotteryService = lotteryService;
-    }
-
-    @PostMapping("")
-    public Lottery createLottery (@Valid @RequestBody LotteryRequest request) throws Exception {
-
-        return this.lotteryService.createLottery(request);
     }
 
     @GetMapping("")

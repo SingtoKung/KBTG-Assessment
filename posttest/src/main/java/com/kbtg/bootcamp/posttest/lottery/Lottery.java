@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-@Entity
-@Table(name = "lottery")
+@Entity(name = "lottery")
+//@Table(name = "lottery")
 public class Lottery {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

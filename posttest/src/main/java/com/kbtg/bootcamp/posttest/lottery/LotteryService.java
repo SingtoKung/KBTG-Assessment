@@ -1,11 +1,11 @@
 package com.kbtg.bootcamp.posttest.lottery;
 
+import com.kbtg.bootcamp.posttest.Exception.InternalServerException;
+import com.kbtg.bootcamp.posttest.Exception.NotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class LotteryService {
@@ -24,15 +24,17 @@ public class LotteryService {
         if (optionalLottery.isPresent()) {
             lottery = optionalLottery.get();
             lottery.setAmount(lottery.getAmount() + request.getAmount());
-            lotteryRepository.save(lottery);
-
-
         } else {
             lottery = new Lottery();
             lottery.setTicket(request.getTicket());
             lottery.setPrice(request.getPrice());
             lottery.setAmount(request.getAmount());
+        }
+
+        try {
             lotteryRepository.save(lottery);
+        } catch (Exception e) {
+            throw new InternalServerException("Failed to add lottery");
         }
 
         return lottery;
@@ -40,6 +42,13 @@ public class LotteryService {
 
     public List<Lottery> getAllAvailableTicket() throws Exception {
 
-        return lotteryRepository.findAll();
+        List<Lottery> optionalLottery = lotteryRepository.findByAllAvailableTicket();
+        if (optionalLottery.isEmpty()) {
+            throw new NotFoundException("Not found available lottery!");
+        }
+
+
+
+        return optionalLottery;
     }
 }
