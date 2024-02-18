@@ -36,7 +36,7 @@ public class UserController {
     }
 
     @DeleteMapping("/{userId}/lotteries/{ticketId}")
-    public UserTicketResponse deleteLottery (
+    public LotteryResponse deleteLottery (
             @PathVariable(name = "userId") String userID,
             @PathVariable(name = "ticketId") String ticketId
     ) {

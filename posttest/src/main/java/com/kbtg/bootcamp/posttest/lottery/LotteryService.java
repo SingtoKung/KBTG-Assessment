@@ -23,7 +23,7 @@ public class LotteryService {
     }
 
     @Transactional
-    public Lottery createLottery(LotteryRequest request) throws Exception {
+    public LotteryResponse createLottery(LotteryRequest request) throws Exception {
 
         Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(request.getTicket());
         Lottery lottery = null;
@@ -39,11 +39,12 @@ public class LotteryService {
 
         try {
             lotteryRepository.save(lottery);
+            return new LotteryResponse(lottery.getTicket());
         } catch (Exception e) {
             throw new InternalServerException("Failed to add lottery");
         }
 
-        return lottery;
+
     }
 
     public List<Lottery> getAllAvailableTicket() throws Exception {
@@ -115,7 +116,7 @@ public class LotteryService {
     }
 
     @Transactional
-    public UserTicketResponse deleteLottery(String userId, String ticketId) {
+    public LotteryResponse deleteLottery(String userId, String ticketId) {
 
         Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
         Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(ticketId.trim());
@@ -137,7 +138,7 @@ public class LotteryService {
 
         try {
             lotteryRepository.save(lottery);
-            return new UserTicketResponse(userTicket.getId());
+            return new LotteryResponse(lottery.getTicket());
         } catch (Exception e) {
             throw new InternalServerException("Failed to sell lottery");
         }
