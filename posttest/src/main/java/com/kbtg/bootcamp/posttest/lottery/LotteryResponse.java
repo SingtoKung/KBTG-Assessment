@@ -6,3 +6,4 @@ public record LotteryResponse (String ticket, UserTicket userTicket) {
 }
 
 
+

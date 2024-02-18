@@ -85,4 +85,27 @@ public class LotteryService {
             throw new InternalServerException("Failed to buy lottery");
         }
     }
+
+    @Transactional
+    public List<Lottery> getOwnLottery(String userId) {
+
+        Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
+        List<Lottery> optionalLottery = lotteryRepository.findByOwnerTicket();
+
+        if (optionalUserTicket.isEmpty()) {
+            throw new BadRequestException("Invalid user id");
+        }
+        if (optionalLottery.isEmpty()) {
+            throw new NotFoundException("Not found lottery");
+        }
+
+        UserTicket userTicket = optionalUserTicket.get();
+        List<Lottery> ownLottery = new ArrayList<Lottery>();
+        for (Lottery lottery : optionalLottery) {
+            if (lottery.getUserTicket() == userTicket)
+                ownLottery.add(lottery);
+            }
+
+        return ownLottery;
+    }
 }

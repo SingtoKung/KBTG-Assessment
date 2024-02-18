@@ -22,9 +22,7 @@ public interface LotteryRepository extends JpaRepository<Lottery, String> {
     List<Lottery> findByAllAvailableTicket();
 
     @Modifying
-    @Query(value = "SELECT * FROM lottery l WHERE l.ticket = :ticket AND l.user_ticket IS NULL ORDER BY id", nativeQuery = true)
-    List<Lottery> findByAvailableTicket(
-            @Param("ticket") String ticket
-    );
+    @Query(value = "SELECT * FROM lottery l ORDER BY id", nativeQuery = true)
+    List<Lottery> findByOwnerTicket();
 
 }

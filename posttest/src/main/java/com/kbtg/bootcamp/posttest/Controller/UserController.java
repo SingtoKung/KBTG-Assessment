@@ -1,11 +1,12 @@
 package com.kbtg.bootcamp.posttest.Controller;
 
-import com.kbtg.bootcamp.posttest.lottery.LotteryRepository;
+import com.kbtg.bootcamp.posttest.lottery.Lottery;
 import com.kbtg.bootcamp.posttest.lottery.LotteryResponse;
 import com.kbtg.bootcamp.posttest.lottery.LotteryService;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicketResponse;
-import jakarta.annotation.security.RolesAllowed;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/users")
@@ -24,6 +25,14 @@ public class UserController {
     ) {
 
         return lotteryService.buyLottery(userID, ticketId);
+    }
+
+    @GetMapping("/{userId}/lotteries")
+    public List<Lottery> getOwnLottery (
+            @PathVariable(name = "userId") String userID
+    ) {
+
+        return lotteryService.getOwnLottery(userID);
     }
 
 }
