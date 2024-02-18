@@ -28,7 +28,7 @@ public class UserController {
     }
 
     @GetMapping("/{userId}/lotteries")
-    public List<Lottery> getOwnLottery (
+    public String getOwnLottery (
             @PathVariable(name = "userId") String userID
     ) {
 

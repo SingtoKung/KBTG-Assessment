@@ -1,10 +1,11 @@
 package com.kbtg.bootcamp.posttest.lottery;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import com.kbtg.bootcamp.posttest.Exception.BadRequestException;
 import com.kbtg.bootcamp.posttest.Exception.InternalServerException;
 import com.kbtg.bootcamp.posttest.Exception.NotFoundException;
+import com.kbtg.bootcamp.posttest.Response.MyLotteyResponse;
+import com.kbtg.bootcamp.posttest.Response.TicketResponse;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicket;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicketRepository;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicketResponse;
@@ -110,7 +111,7 @@ public class LotteryService {
     }
 
     @Transactional
-    public List<Lottery> getOwnLottery(String userId) {
+    public String getOwnLottery(String userId) {
 
         Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
         List<Lottery> optionalLottery = lotteryRepository.findByOwnerTicket();
@@ -123,18 +124,21 @@ public class LotteryService {
         }
 
         UserTicket userTicket = optionalUserTicket.get();
-        List<Lottery> ownLottery = new ArrayList<Lottery>();
+        ArrayList<String> ownLottery = new ArrayList<>();
         int count = 0;
         int cost = 0;
         for (Lottery lottery : optionalLottery) {
             if (lottery.getUserTicket() == userTicket) {
-                ownLottery.add(lottery);
+                ownLottery.add(lottery.getTicket());
                 count += lottery.getAmount();
                 cost += (lottery.getAmount() * lottery.getPrice());
             }
         }
 
-        return ownLottery;
+        Gson gson = new Gson();
+        String newJson = gson.toJson(new MyLotteyResponse(ownLottery, count, cost));
+
+        return newJson;
     }
 
     @Transactional
