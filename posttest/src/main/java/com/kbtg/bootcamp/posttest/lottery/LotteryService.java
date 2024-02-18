@@ -101,10 +101,15 @@ public class LotteryService {
 
         UserTicket userTicket = optionalUserTicket.get();
         List<Lottery> ownLottery = new ArrayList<Lottery>();
+        int count = 0;
+        int cost = 0;
         for (Lottery lottery : optionalLottery) {
-            if (lottery.getUserTicket() == userTicket)
+            if (lottery.getUserTicket() == userTicket) {
                 ownLottery.add(lottery);
+                count += lottery.getAmount();
+                cost += (lottery.getAmount() * lottery.getPrice());
             }
+        }
 
         return ownLottery;
     }
