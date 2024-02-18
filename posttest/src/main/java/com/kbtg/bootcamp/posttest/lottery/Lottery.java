@@ -1,14 +1,14 @@
 package com.kbtg.bootcamp.posttest.lottery;
 
+import com.kbtg.bootcamp.posttest.user_ticket.UserTicket;
 import jakarta.persistence.*;
-import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-@Entity(name = "lottery")
-//@Table(name = "lottery")
+@Entity
+@Table(name = "lottery")
 public class Lottery {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,6 +27,15 @@ public class Lottery {
     @NotNull
     @Min(value = 0)
     private int amount;
+
+    @ManyToOne
+    @JoinColumn(name = "user_ticket")
+    private UserTicket userTicket;
+
+    public Lottery() {
+
+    }
+
 
     public int getId() {
         return id;
@@ -60,4 +69,11 @@ public class Lottery {
         this.amount = amount;
     }
 
+    public UserTicket getUserTicket() {
+        return userTicket;
+    }
+
+    public void setUserTicket(UserTicket userTicket) {
+        this.userTicket = userTicket;
+    }
 }

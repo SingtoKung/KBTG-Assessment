@@ -1,7 +1,11 @@
 package com.kbtg.bootcamp.posttest.lottery;
 
+import com.kbtg.bootcamp.posttest.Exception.BadRequestException;
 import com.kbtg.bootcamp.posttest.Exception.InternalServerException;
 import com.kbtg.bootcamp.posttest.Exception.NotFoundException;
+import com.kbtg.bootcamp.posttest.user_ticket.UserTicket;
+import com.kbtg.bootcamp.posttest.user_ticket.UserTicketRepository;
+import com.kbtg.bootcamp.posttest.user_ticket.UserTicketResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
@@ -11,9 +15,11 @@ import java.util.*;
 public class LotteryService {
 
     private final LotteryRepository lotteryRepository;
-    public LotteryService (LotteryRepository lotteryRepository) {
+    private final UserTicketRepository userTicketRepository;
+    public LotteryService (LotteryRepository lotteryRepository, UserTicketRepository userTicketRepository) {
 
         this.lotteryRepository = lotteryRepository;
+        this.userTicketRepository = userTicketRepository;
     }
 
     @Transactional
@@ -47,8 +53,36 @@ public class LotteryService {
             throw new NotFoundException("Not found available lottery!");
         }
 
-
-
         return optionalLottery;
+    }
+
+    @Transactional
+    public UserTicketResponse buyLottery(String userId, String ticketId) {
+
+        Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
+        Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(ticketId.trim());
+
+        if (optionalUserTicket.isEmpty()) {
+            throw new BadRequestException("Invalid user id");
+        }
+        if (optionalLottery.isEmpty()) {
+            throw new BadRequestException("Invalid ticket id");
+        }
+
+        UserTicket userTicket = optionalUserTicket.get();
+        Lottery lottery = optionalLottery.get();
+        if (lottery.getUserTicket() == null) {
+            lottery.setUserTicket(userTicket);
+        } else {
+            throw new BadRequestException("Failed to buy lottery");
+        }
+
+        try {
+
+            lotteryRepository.save(lottery);
+            return new UserTicketResponse(userTicket.getId());
+        } catch (Exception e) {
+            throw new InternalServerException("Failed to buy lottery");
+        }
     }
 }
