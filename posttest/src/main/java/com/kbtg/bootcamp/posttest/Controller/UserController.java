@@ -35,4 +35,13 @@ public class UserController {
         return lotteryService.getOwnLottery(userID);
     }
 
+    @DeleteMapping("/{userId}/lotteries/{ticketId}")
+    public UserTicketResponse deleteLottery (
+            @PathVariable(name = "userId") String userID,
+            @PathVariable(name = "ticketId") String ticketId
+    ) {
+
+        return lotteryService.deleteLottery(userID, ticketId);
+    }
+
 }

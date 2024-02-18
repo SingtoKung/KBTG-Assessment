@@ -113,4 +113,33 @@ public class LotteryService {
 
         return ownLottery;
     }
+
+    @Transactional
+    public UserTicketResponse deleteLottery(String userId, String ticketId) {
+
+        Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
+        Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(ticketId.trim());
+
+        if (optionalUserTicket.isEmpty()) {
+            throw new BadRequestException("Invalid user id");
+        }
+        if (optionalLottery.isEmpty()) {
+            throw new BadRequestException("Invalid ticket id");
+        }
+
+        UserTicket userTicket = optionalUserTicket.get();
+        Lottery lottery = optionalLottery.get();
+        if (lottery.getUserTicket() == userTicket) {
+            lottery.setUserTicket(null);
+        } else {
+            throw new BadRequestException("Failed to sell lottery");
+        }
+
+        try {
+            lotteryRepository.save(lottery);
+            return new UserTicketResponse(userTicket.getId());
+        } catch (Exception e) {
+            throw new InternalServerException("Failed to sell lottery");
+        }
+    }
 }
