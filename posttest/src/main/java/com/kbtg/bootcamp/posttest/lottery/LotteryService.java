@@ -33,7 +33,7 @@ public class LotteryService {
             lottery = optionalLottery.get();
             if (lottery.getUserTicket() == null) {
                 lottery.setAmount(lottery.getAmount() + request.getAmount());
-                lottery.setPrice(lottery.getPrice() + request.getPrice());
+                lottery.setPrice(request.getPrice());
             } else {
                 throw new BadRequestException("This lottery already has owner");
             }
