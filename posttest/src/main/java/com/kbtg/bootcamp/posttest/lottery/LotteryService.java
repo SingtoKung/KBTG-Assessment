@@ -1,5 +1,7 @@
 package com.kbtg.bootcamp.posttest.lottery;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
 import com.kbtg.bootcamp.posttest.Exception.BadRequestException;
 import com.kbtg.bootcamp.posttest.Exception.InternalServerException;
 import com.kbtg.bootcamp.posttest.Exception.NotFoundException;
@@ -53,14 +55,28 @@ public class LotteryService {
 
     }
 
-    public List<Lottery> getAllAvailableTicket() throws Exception {
+    public String getAllAvailableTicket() throws Exception {
 
         List<Lottery> optionalLottery = lotteryRepository.findByAllAvailableTicket();
         if (optionalLottery.isEmpty()) {
             throw new NotFoundException("Not found available lottery!");
         }
 
-        return optionalLottery;
+        ArrayList<String> availLottery = new ArrayList<>();
+        for (Lottery lottery : optionalLottery) {
+            if (lottery.getUserTicket()==null) {
+                availLottery.add(lottery.getTicket());
+            }
+        }
+
+        Gson gson = new Gson();
+        String newJson = gson.toJson(new TicketResponse(availLottery));
+
+        try {
+            return newJson;
+        } catch (Exception e) {
+            throw new InternalServerException("Failed to found available lottery");
+        }
     }
 
     @Transactional
