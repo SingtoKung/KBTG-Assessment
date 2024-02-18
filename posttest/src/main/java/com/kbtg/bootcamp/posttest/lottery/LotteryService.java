@@ -1,8 +1,8 @@
 package com.kbtg.bootcamp.posttest.lottery;
 
 import com.google.gson.Gson;
-import com.kbtg.bootcamp.posttest.Exception.BadRequestException;
 import com.kbtg.bootcamp.posttest.Exception.InternalServerException;
+import com.kbtg.bootcamp.posttest.Exception.BadRequestException;
 import com.kbtg.bootcamp.posttest.Exception.NotFoundException;
 import com.kbtg.bootcamp.posttest.Response.MyLotteyResponse;
 import com.kbtg.bootcamp.posttest.Response.TicketResponse;
@@ -11,6 +11,7 @@ import com.kbtg.bootcamp.posttest.user_ticket.UserTicketRepository;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicketResponse;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
+
 
 import java.util.*;
 
@@ -26,7 +27,7 @@ public class LotteryService {
     }
 
     @Transactional
-    public LotteryResponse createLottery(LotteryRequest request) throws Exception {
+    public LotteryResponse createLottery(LotteryRequest request) throws Exception, BadRequestException {
 
         Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(request.getTicket());
         Lottery lottery = null;
@@ -48,11 +49,11 @@ public class LotteryService {
 
         try {
             lotteryRepository.save(lottery);
-            return new LotteryResponse(lottery.getTicket());
         } catch (Exception e) {
             throw new InternalServerException("Failed to add lottery");
         }
 
+        return new LotteryResponse(lottery.getTicket());
 
     }
 
@@ -95,19 +96,19 @@ public class LotteryService {
 
         UserTicket userTicket = optionalUserTicket.get();
         Lottery lottery = optionalLottery.get();
-        if (lottery.getUserTicket() == null) {
-            lottery.setUserTicket(userTicket);
-        } else {
-            throw new BadRequestException("Failed to buy lottery");
+
+        if (lottery.getUserTicket() != null) {
+            throw new BadRequestException("This lottery already has owner");
         }
 
         try {
-
+            lottery.setUserTicket(userTicket);
             lotteryRepository.save(lottery);
-            return new UserTicketResponse(userTicket.getId());
         } catch (Exception e) {
-            throw new InternalServerException("Failed to buy lottery");
+            throw new InternalServerException("Failed to add lottery");
         }
+
+        return new UserTicketResponse(userTicket.getId());
     }
 
     @Transactional
@@ -138,7 +139,11 @@ public class LotteryService {
         Gson gson = new Gson();
         String newJson = gson.toJson(new MyLotteyResponse(ownLottery, count, cost));
 
-        return newJson;
+        try {
+            return newJson;
+        } catch (Exception e) {
+            throw new InternalServerException("Failed to found your lottery");
+        }
     }
 
     @Transactional
@@ -164,9 +169,11 @@ public class LotteryService {
 
         try {
             lotteryRepository.save(lottery);
-            return new LotteryResponse(lottery.getTicket());
+
         } catch (Exception e) {
             throw new InternalServerException("Failed to sell lottery");
         }
+
+        return new LotteryResponse(lottery.getTicket());
     }
 }
