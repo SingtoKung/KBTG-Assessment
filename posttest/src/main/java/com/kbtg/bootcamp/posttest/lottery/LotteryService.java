@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 
 
 import java.util.*;
-import java.util.stream.Stream;
 
 @Service
 public class LotteryService {
@@ -94,9 +93,12 @@ public class LotteryService {
         userTickets.add(userTicket);
         lottery.setUserTickets(userTickets);
         lottery.setAmount(lottery.getAmount() - 1); //Remove amount = 1
+        userTicket.setCount(userTicket.getCount() + 1);
+        userTicket.setCost(userTicket.getCost() + lottery.getPrice());
 
         try {
             lotteryRepository.save(lottery);
+            userTicketRepository.save(userTicket);
         } catch (Exception e) {
             throw new InternalServerException("Failed to buy lottery");
         }
@@ -120,16 +122,12 @@ public class LotteryService {
 
 //        Calculate part
         ArrayList<String> ownLottery = new ArrayList<>();
-        int count = 0;
-        int cost = 0;
         for (Lottery lottery : lotteries) {
             ownLottery.add(lottery.getTicket());
-            count += lottery.getAmount();
-            cost += (lottery.getAmount() * lottery.getPrice());
         }
 
         Gson gson = new Gson();
-        String newJson = gson.toJson(new MyLotteyResponse(ownLottery, count, cost));
+        String newJson = gson.toJson(new MyLotteyResponse(ownLottery, userTicket.getCount(), userTicket.getCost()));
 
         try {
             return newJson;
@@ -162,9 +160,11 @@ public class LotteryService {
         lotteries.removeIf(lottery -> lottery.getTicket().equals(ticketId.trim()));
         userTicket.setLotteries(lotteries);
 
+
         Lottery lottery = lotteryByTicketId.getFirst();
         lottery.setAmount(lottery.getAmount() + lotteryByTicketId.size());
-
+        userTicket.setCount(userTicket.getCount() - lotteryByTicketId.size());
+        userTicket.setCost(userTicket.getCost() - (lottery.getPrice() * lotteryByTicketId.size()));
 
 
         try {
