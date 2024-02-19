@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @Service
 public class LotteryService {
@@ -27,19 +28,13 @@ public class LotteryService {
     }
 
     @Transactional
-    public LotteryResponse createLottery(LotteryRequest request) throws Exception, BadRequestException {
+    public LotteryResponse createLottery(LotteryRequest request) {
 
         Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(request.getTicket());
         Lottery lottery = null;
         if (optionalLottery.isPresent()) {
             lottery = optionalLottery.get();
-            if (lottery.getUserTicket() == null) {
-                lottery.setAmount(lottery.getAmount() + request.getAmount());
-                lottery.setPrice(request.getPrice());
-            } else {
-                throw new BadRequestException("This lottery already has owner");
-            }
-
+            lottery.setAmount(lottery.getAmount() + request.getAmount());
         } else {
             lottery = new Lottery();
             lottery.setTicket(request.getTicket());
@@ -54,10 +49,9 @@ public class LotteryService {
         }
 
         return new LotteryResponse(lottery.getTicket());
-
     }
 
-    public String getAllAvailableTicket() throws Exception {
+    public String getAllAvailableTicket() {
 
         List<Lottery> optionalLottery = lotteryRepository.findByAllAvailableTicket();
         if (optionalLottery.isEmpty()) {
@@ -66,9 +60,7 @@ public class LotteryService {
 
         ArrayList<String> availLottery = new ArrayList<>();
         for (Lottery lottery : optionalLottery) {
-            if (lottery.getUserTicket()==null) {
-                availLottery.add(lottery.getTicket());
-            }
+            availLottery.add(lottery.getTicket());
         }
 
         Gson gson = new Gson();
@@ -90,22 +82,23 @@ public class LotteryService {
         if (optionalUserTicket.isEmpty()) {
             throw new BadRequestException("Invalid user id");
         }
-        if (optionalLottery.isEmpty()) {
+        if (optionalLottery.isEmpty() || optionalLottery.get().getAmount() <= 0) {
             throw new BadRequestException("Invalid ticket id");
         }
 
         UserTicket userTicket = optionalUserTicket.get();
         Lottery lottery = optionalLottery.get();
 
-        if (lottery.getUserTicket() != null) {
-            throw new BadRequestException("This lottery already has owner");
-        }
+//        Set userTicket by create userTicket set
+        Set<UserTicket> userTickets = lottery.getUserTickets();
+        userTickets.add(userTicket);
+        lottery.setUserTickets(userTickets);
+        lottery.setAmount(lottery.getAmount() - 1); //Remove amount = 1
 
         try {
-            lottery.setUserTicket(userTicket);
             lotteryRepository.save(lottery);
         } catch (Exception e) {
-            throw new InternalServerException("Failed to add lottery");
+            throw new InternalServerException("Failed to buy lottery");
         }
 
         return new UserTicketResponse(userTicket.getId());
@@ -115,25 +108,24 @@ public class LotteryService {
     public String getOwnLottery(String userId) {
 
         Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
-        List<Lottery> optionalLottery = lotteryRepository.findByOwnerTicket();
-
         if (optionalUserTicket.isEmpty()) {
             throw new BadRequestException("Invalid user id");
         }
-        if (optionalLottery.isEmpty()) {
+
+        UserTicket userTicket = optionalUserTicket.get();
+        Set<Lottery> lotteries = userTicket.getLotteries();
+        if (lotteries.isEmpty()) {
             throw new NotFoundException("Not found lottery");
         }
 
-        UserTicket userTicket = optionalUserTicket.get();
+//        Calculate part
         ArrayList<String> ownLottery = new ArrayList<>();
         int count = 0;
         int cost = 0;
-        for (Lottery lottery : optionalLottery) {
-            if (lottery.getUserTicket() == userTicket) {
-                ownLottery.add(lottery.getTicket());
-                count += lottery.getAmount();
-                cost += (lottery.getAmount() * lottery.getPrice());
-            }
+        for (Lottery lottery : lotteries) {
+            ownLottery.add(lottery.getTicket());
+            count += lottery.getAmount();
+            cost += (lottery.getAmount() * lottery.getPrice());
         }
 
         Gson gson = new Gson();
@@ -142,7 +134,7 @@ public class LotteryService {
         try {
             return newJson;
         } catch (Exception e) {
-            throw new InternalServerException("Failed to found your lottery");
+            throw new InternalServerException("Failed to find your lottery");
         }
     }
 
@@ -150,26 +142,34 @@ public class LotteryService {
     public LotteryResponse deleteLottery(String userId, String ticketId) {
 
         Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
-        Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(ticketId.trim());
 
         if (optionalUserTicket.isEmpty()) {
             throw new BadRequestException("Invalid user id");
         }
-        if (optionalLottery.isEmpty()) {
+
+        UserTicket userTicket = optionalUserTicket.get();
+
+        Set<Lottery> lotteries = userTicket.getLotteries();
+        if (lotteries.isEmpty()) {
+            throw new BadRequestException("Not found your lottery");
+        }
+
+        List<Lottery> lotteryByTicketId = lotteries.stream().filter(lottery1 -> lottery1.getTicket().equals(ticketId.trim())).toList();
+        if (lotteryByTicketId.isEmpty()) {
             throw new BadRequestException("Invalid ticket id");
         }
 
-        UserTicket userTicket = optionalUserTicket.get();
-        Lottery lottery = optionalLottery.get();
-        if (lottery.getUserTicket() == userTicket) {
-            lottery.setUserTicket(null);
-        } else {
-            throw new BadRequestException("Failed to sell lottery");
-        }
+        lotteries.removeIf(lottery -> lottery.getTicket().equals(ticketId.trim()));
+        userTicket.setLotteries(lotteries);
+
+        Lottery lottery = lotteryByTicketId.getFirst();
+        lottery.setAmount(lottery.getAmount() + lotteryByTicketId.size());
+
+
 
         try {
             lotteryRepository.save(lottery);
-
+            userTicketRepository.save(userTicket);
         } catch (Exception e) {
             throw new InternalServerException("Failed to sell lottery");
         }

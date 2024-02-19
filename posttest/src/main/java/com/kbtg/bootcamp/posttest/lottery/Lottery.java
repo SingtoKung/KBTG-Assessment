@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.util.Set;
+
 @Entity
 @Table(name = "lottery")
 public class Lottery {
@@ -28,14 +30,22 @@ public class Lottery {
     @Min(value = 0)
     private int amount;
 
-    @ManyToOne
-    @JoinColumn(name = "user_ticket")
-    private UserTicket userTicket;
+//    @ManyToOne
+//    @JoinColumn(name = "user_ticket")
+//    private UserTicket userTicket;
 
-    public Lottery() {
+    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH })
+    @JoinTable(name = "user_ticket_mapping", joinColumns = @JoinColumn(name = "lottery_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id"))
+    private Set<UserTicket> userTickets;
 
+    public Lottery() {}
+
+    public Lottery(String ticket, int price, int amount) {
+        this.ticket = ticket;
+        this.price = price;
+        this.amount = amount;
     }
-
 
     public int getId() {
         return id;
@@ -51,6 +61,10 @@ public class Lottery {
 
     public int getAmount() {
         return amount;
+    }
+
+    public Set<UserTicket> getUserTickets() {
+        return userTickets;
     }
 
     public void setId(int id) {
@@ -69,11 +83,7 @@ public class Lottery {
         this.amount = amount;
     }
 
-    public UserTicket getUserTicket() {
-        return userTicket;
-    }
-
-    public void setUserTicket(UserTicket userTicket) {
-        this.userTicket = userTicket;
+    public void setUserTickets(Set<UserTicket> userTickets) {
+        this.userTickets = userTickets;
     }
 }

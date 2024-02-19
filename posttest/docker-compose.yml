@@ -2,12 +2,14 @@ version: '3'
 
 services:
   postgres:
-    image: postgres:16.0
+    container_name: java_bootcamp
+    image: postgres:15.0
     environment:
-      POSTGRES_DB: lottery
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: lottery
     volumes:
+      - ./data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     ports:
       - "5432:5432"

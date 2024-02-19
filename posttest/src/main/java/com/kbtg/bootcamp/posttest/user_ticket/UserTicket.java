@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -23,9 +22,20 @@ public class UserTicket {
     @Pattern(regexp = "[\\d]{10}")
     private String userID;
 
-
-    @OneToMany(mappedBy = "userTicket")
+    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH })
+    @JoinTable(name = "user_ticket_mapping", joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "lottery_id"))
     private Set<Lottery> lotteries;
+
+
+//    @OneToMany(mappedBy = "userTicket")
+//    private Set<Lottery> lotteries;
+
+    public UserTicket() {}
+
+    public UserTicket(String userID) {
+        this.userID = userID;
+    }
 
     public Integer getId() {
         return id;
@@ -33,6 +43,10 @@ public class UserTicket {
 
     public String getUserID() {
         return userID;
+    }
+
+    public Set<Lottery> getLotteries() {
+        return lotteries;
     }
 
     public void setId(Integer id) {
@@ -43,5 +57,7 @@ public class UserTicket {
         this.userID = userID;
     }
 
-
+    public void setLotteries(Set<Lottery> lotteries) {
+        this.lotteries = lotteries;
+    }
 }

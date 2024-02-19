@@ -21,6 +21,8 @@ public class SecurityConfig {
 
         return http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests((requests) -> requests
+                        .requestMatchers("/users/**").permitAll()
+                        .requestMatchers("/lotteries").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(new ApiKeyAuthFilter(), BasicAuthenticationFilter.class)
                 .httpBasic(withDefaults())

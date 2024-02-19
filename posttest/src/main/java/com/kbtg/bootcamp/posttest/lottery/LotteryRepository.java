@@ -1,5 +1,6 @@
 package com.kbtg.bootcamp.posttest.lottery;
 
+import com.kbtg.bootcamp.posttest.user_ticket.UserTicket;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,7 +16,6 @@ import java.util.Optional;
 public interface LotteryRepository extends JpaRepository<Lottery, String> {
 
     Optional<Lottery> findByTicket(String ticket);
-
 
     @Modifying
     @Query(value = "SELECT * FROM lottery l WHERE l.amount > 0 ORDER BY id", nativeQuery = true)
