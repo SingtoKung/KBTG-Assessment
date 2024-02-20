@@ -7,15 +7,16 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
+import java.util.List;
 import java.util.Set;
 
 @Entity
 @Table(name = "lottery")
 public class Lottery {
-    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private int id;
 
+    @Id
     @Column(length = 6)
     @Size(min = 6, max = 6)
     @NotNull
@@ -29,15 +30,6 @@ public class Lottery {
     @NotNull
     @Min(value = 0)
     private int amount;
-
-//    @ManyToOne
-//    @JoinColumn(name = "user_ticket")
-//    private UserTicket userTicket;
-
-    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH })
-    @JoinTable(name = "user_ticket_mapping", joinColumns = @JoinColumn(name = "lottery_id"),
-            inverseJoinColumns = @JoinColumn(name = "user_id"))
-    private Set<UserTicket> userTickets;
 
     public Lottery() {}
 
@@ -63,10 +55,6 @@ public class Lottery {
         return amount;
     }
 
-    public Set<UserTicket> getUserTickets() {
-        return userTickets;
-    }
-
     public void setId(int id) {
         this.id = id;
     }
@@ -83,7 +71,4 @@ public class Lottery {
         this.amount = amount;
     }
 
-    public void setUserTickets(Set<UserTicket> userTickets) {
-        this.userTickets = userTickets;
-    }
 }

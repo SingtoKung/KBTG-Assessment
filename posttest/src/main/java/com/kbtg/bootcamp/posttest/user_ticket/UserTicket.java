@@ -13,15 +13,20 @@ import java.util.Set;
 @Table(name = "user_ticket")
 public class UserTicket {
 
-
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
     private Integer id;
 
-    @Id
     @NotNull
     @Size(min = 10, max = 10)
     @Pattern(regexp = "[\\d]{10}")
+    @Column(name = "userId")
     private String userID;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_ticket")
+    private Lottery lottery;
 
     @PositiveOrZero
     @Column(name = "countTicket")
@@ -31,20 +36,15 @@ public class UserTicket {
     @Column(name = "totalCost")
     private Integer cost = 0;
 
-    @ManyToMany(fetch = FetchType.LAZY, cascade = { CascadeType.PERSIST, CascadeType.MERGE, CascadeType.DETACH, CascadeType.REFRESH })
-    @JoinTable(name = "user_ticket_mapping", joinColumns = @JoinColumn(name = "user_id"),
-            inverseJoinColumns = @JoinColumn(name = "lottery_id"))
-    private Set<Lottery> lotteries;
-
 
 //    @OneToMany(mappedBy = "userTicket")
 //    private Set<Lottery> lotteries;
 
     public UserTicket() {}
 
-    public UserTicket(String userID, Integer count, Integer cost) {
-
+    public UserTicket(String userID, Lottery lottery, Integer count, Integer cost) {
         this.userID = userID;
+        this.lottery = lottery;
         this.count = count;
         this.cost = cost;
     }
@@ -57,14 +57,16 @@ public class UserTicket {
         return userID;
     }
 
-    public Integer getCount() { return count; }
+    public Lottery getLottery() {
+        return lottery;
+    }
+
+    public Integer getCount() {
+        return count;
+    }
 
     public Integer getCost() {
         return cost;
-    }
-
-    public Set<Lottery> getLotteries() {
-        return lotteries;
     }
 
     public void setId(Integer id) {
@@ -75,11 +77,15 @@ public class UserTicket {
         this.userID = userID;
     }
 
-    public void setCount(Integer count) { this.count = count; }
+    public void setLottery(Lottery lottery) {
+        this.lottery = lottery;
+    }
 
-    public void setCost(Integer cost) { this.cost = cost; }
+    public void setCount(Integer count) {
+        this.count = count;
+    }
 
-    public void setLotteries(Set<Lottery> lotteries) {
-        this.lotteries = lotteries;
+    public void setCost(Integer cost) {
+        this.cost = cost;
     }
 }

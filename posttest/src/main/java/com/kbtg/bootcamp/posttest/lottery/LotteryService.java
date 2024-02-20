@@ -10,6 +10,7 @@ import com.kbtg.bootcamp.posttest.user_ticket.UserTicket;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicketRepository;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicketResponse;
 import jakarta.transaction.Transactional;
+import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 
@@ -75,59 +76,68 @@ public class LotteryService {
     @Transactional
     public UserTicketResponse buyLottery(String userId, String ticketId) {
 
-        Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
-        Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(ticketId.trim());
-
-        if (optionalUserTicket.isEmpty()) {
+        if (!userId.matches("[\\d]{10}")) {
             throw new BadRequestException("Invalid user id");
         }
+
+        Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(ticketId.trim());
         if (optionalLottery.isEmpty() || optionalLottery.get().getAmount() <= 0) {
             throw new BadRequestException("Invalid ticket id");
         }
 
-        UserTicket userTicket = optionalUserTicket.get();
         Lottery lottery = optionalLottery.get();
+        lottery.setAmount(lottery.getAmount() - 1);
 
-//        Set userTicket by create userTicket set
-        Set<UserTicket> userTickets = lottery.getUserTickets();
-        userTickets.add(userTicket);
-        lottery.setUserTickets(userTickets);
-        lottery.setAmount(lottery.getAmount() - 1); //Remove amount = 1
-        userTicket.setCount(userTicket.getCount() + 1);
-        userTicket.setCost(userTicket.getCost() + lottery.getPrice());
+        List<UserTicket> userTicketSet = userTicketRepository.findByuserID(userId.trim());
+        List<UserTicket> matchUserTicket = userTicketSet.stream()
+                .filter(userTicket -> userTicket.getLottery().equals(lottery)).toList();
 
         try {
             lotteryRepository.save(lottery);
-            userTicketRepository.save(userTicket);
+            if (matchUserTicket.isEmpty()) {
+                //      Set userTicket by create userTicket set
+                UserTicket newTransaction = new UserTicket(userId, lottery, 1, lottery.getPrice());
+                userTicketRepository.save(newTransaction);
+
+                return new UserTicketResponse(newTransaction.getId());
+            } else {
+                //      Update count and cost to match ticket because I will use this transaction for EX05
+                matchUserTicket.getFirst().setCount(matchUserTicket.getFirst().getCount() + 1);
+                matchUserTicket.getFirst().setCost(matchUserTicket.getFirst().getCost() + lottery.getPrice());
+
+                return new UserTicketResponse(matchUserTicket.getFirst().getId());
+            }
         } catch (Exception e) {
             throw new InternalServerException("Failed to buy lottery");
         }
-
-        return new UserTicketResponse(userTicket.getId());
     }
 
     @Transactional
     public String getOwnLottery(String userId) {
 
-        Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
-        if (optionalUserTicket.isEmpty()) {
+        if (!userId.matches("[\\d]{10}")) {
             throw new BadRequestException("Invalid user id");
         }
 
-        UserTicket userTicket = optionalUserTicket.get();
-        Set<Lottery> lotteries = userTicket.getLotteries();
-        if (lotteries.isEmpty()) {
-            throw new NotFoundException("Not found lottery");
+        List<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
+        if (optionalUserTicket.isEmpty()) {
+            throw new BadRequestException("Not found your lottery, Buy it!");
         }
 
 //        Calculate part
+        int countLottery = 0;
+        int totalCost = 0;
         ArrayList<String> ownLottery = new ArrayList<>();
-        for (Lottery lottery : lotteries) {
-            ownLottery.add(lottery.getTicket());
+        for (UserTicket userTicket : optionalUserTicket) {
+            if (ownLottery.isEmpty() || !ownLottery.contains(userTicket.getLottery().getTicket())) {
+                ownLottery.add(userTicket.getLottery().getTicket());
+            }
+            countLottery += userTicket.getCount();
+            totalCost += (userTicket.getCost());
         }
 
         Gson gson = new Gson();
-        String newJson = gson.toJson(new MyLotteyResponse(ownLottery, userTicket.getCount(), userTicket.getCost()));
+        String newJson = gson.toJson(new MyLotteyResponse(ownLottery, countLottery, totalCost));
 
         try {
             return newJson;
@@ -139,37 +149,35 @@ public class LotteryService {
     @Transactional
     public LotteryResponse deleteLottery(String userId, String ticketId) {
 
-        Optional<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
-
-        if (optionalUserTicket.isEmpty()) {
+        if (!userId.matches("[\\d]{10}")) {
             throw new BadRequestException("Invalid user id");
         }
 
-        UserTicket userTicket = optionalUserTicket.get();
-
-        Set<Lottery> lotteries = userTicket.getLotteries();
-        if (lotteries.isEmpty()) {
-            throw new BadRequestException("Not found your lottery");
-        }
-
-        List<Lottery> lotteryByTicketId = lotteries.stream().filter(lottery1 -> lottery1.getTicket().equals(ticketId.trim())).toList();
-        if (lotteryByTicketId.isEmpty()) {
+        Optional<Lottery> optionalLottery = lotteryRepository.findByTicket(ticketId);
+        if (optionalLottery.isEmpty()) {
             throw new BadRequestException("Invalid ticket id");
         }
 
-        lotteries.removeIf(lottery -> lottery.getTicket().equals(ticketId.trim()));
-        userTicket.setLotteries(lotteries);
+        List<UserTicket> optionalUserTicket = userTicketRepository.findByuserID(userId.trim());
+        if (optionalUserTicket.isEmpty()) {
+            throw new BadRequestException("Not found your lottery, Buy it!");
+        }
 
+        UserTicket matchUserTicket = optionalUserTicket.stream()
+                .filter(userTicket -> userTicket.getLottery().getTicket().equals(ticketId.trim()))
+                .toList().getFirst();
+        if (matchUserTicket == null) {
+            throw new BadRequestException("You don't have this ticket id, Buy it!");
+        }
 
-        Lottery lottery = lotteryByTicketId.getFirst();
-        lottery.setAmount(lottery.getAmount() + lotteryByTicketId.size());
-        userTicket.setCount(userTicket.getCount() - lotteryByTicketId.size());
-        userTicket.setCost(userTicket.getCost() - (lottery.getPrice() * lotteryByTicketId.size()));
-
+        Lottery lottery = optionalLottery.get();
+        //        Calculate lottery amount
+        lottery.setAmount(lottery.getAmount() + matchUserTicket.getCount());
+        //        Remove transaction matchUserTicket
+        optionalUserTicket.removeIf(userTicket -> userTicket.getLottery().equals(lottery));
 
         try {
             lotteryRepository.save(lottery);
-            userTicketRepository.save(userTicket);
         } catch (Exception e) {
             throw new InternalServerException("Failed to sell lottery");
         }
