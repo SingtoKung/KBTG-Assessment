@@ -2,13 +2,13 @@ package com.kbtg.bootcamp.posttest.Response;
 
 import java.util.List;
 
-public class MyLotteyResponse {
+public class MyLotteryResponse {
 
     private List<String> tickets;
     private int count;
     private int cost;
 
-    public MyLotteyResponse(List<String> tickets, int count, int cost) {
+    public MyLotteryResponse(List<String> tickets, int count, int cost) {
         this.tickets = tickets;
         this.count = count;
         this.cost = cost;

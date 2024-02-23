@@ -42,7 +42,11 @@ public class LotteryRequest {
         this.amount = amount;
     }
 
-    public LotteryRequest () {
+    public LotteryRequest () {}
 
+    public LotteryRequest (String ticket, Integer price, Integer amount) {
+        this.ticket = ticket;
+        this.price = price;
+        this.amount = amount;
     }
 }

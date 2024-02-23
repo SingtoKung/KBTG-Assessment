@@ -49,6 +49,14 @@ public class UserTicket {
         this.cost = cost;
     }
 
+    public UserTicket(Integer id, String userID, Lottery lottery, Integer count, Integer cost) {
+        this.id = id;
+        this.userID = userID;
+        this.lottery = lottery;
+        this.count = count;
+        this.cost = cost;
+    }
+
     public Integer getId() {
         return id;
     }

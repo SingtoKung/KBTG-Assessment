@@ -4,13 +4,12 @@ import com.google.gson.Gson;
 import com.kbtg.bootcamp.posttest.Exception.InternalServerException;
 import com.kbtg.bootcamp.posttest.Exception.BadRequestException;
 import com.kbtg.bootcamp.posttest.Exception.NotFoundException;
-import com.kbtg.bootcamp.posttest.Response.MyLotteyResponse;
+import com.kbtg.bootcamp.posttest.Response.MyLotteryResponse;
 import com.kbtg.bootcamp.posttest.Response.TicketResponse;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicket;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicketRepository;
 import com.kbtg.bootcamp.posttest.user_ticket.UserTicketResponse;
 import jakarta.transaction.Transactional;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.stereotype.Service;
 
 
@@ -137,7 +136,7 @@ public class LotteryService {
         }
 
         Gson gson = new Gson();
-        String newJson = gson.toJson(new MyLotteyResponse(ownLottery, countLottery, totalCost));
+        String newJson = gson.toJson(new MyLotteryResponse(ownLottery, countLottery, totalCost));
 
         try {
             return newJson;
