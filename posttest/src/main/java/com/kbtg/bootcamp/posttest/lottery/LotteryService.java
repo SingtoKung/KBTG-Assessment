@@ -101,10 +101,10 @@ public class LotteryService {
                 return new UserTicketResponse(newTransaction.getId());
             } else {
                 //      Update count and cost to match ticket because I will use this transaction for EX05
-                matchUserTicket.getFirst().setCount(matchUserTicket.getFirst().getCount() + 1);
-                matchUserTicket.getFirst().setCost(matchUserTicket.getFirst().getCost() + lottery.getPrice());
+                matchUserTicket.get(0).setCount(matchUserTicket.get(0).getCount() + 1);
+                matchUserTicket.get(0).setCost(matchUserTicket.get(0).getCost() + lottery.getPrice());
 
-                return new UserTicketResponse(matchUserTicket.getFirst().getId());
+                return new UserTicketResponse(matchUserTicket.get(0).getId());
             }
         } catch (Exception e) {
             throw new InternalServerException("Failed to buy lottery");
@@ -162,21 +162,20 @@ public class LotteryService {
             throw new BadRequestException("Not found your lottery, Buy it!");
         }
 
-        UserTicket matchUserTicket = optionalUserTicket.stream()
+        List<UserTicket> matchUserTicket = optionalUserTicket.stream()
                 .filter(userTicket -> userTicket.getLottery().getTicket().equals(ticketId.trim()))
-                .toList().getFirst();
-        if (matchUserTicket == null) {
+                .toList();
+        if (matchUserTicket.isEmpty()) {
             throw new BadRequestException("You don't have this ticket id, Buy it!");
         }
 
         Lottery lottery = optionalLottery.get();
         //        Calculate lottery amount
-        lottery.setAmount(lottery.getAmount() + matchUserTicket.getCount());
-        //        Remove transaction matchUserTicket
-        optionalUserTicket.removeIf(userTicket -> userTicket.getLottery().equals(lottery));
+        lottery.setAmount(lottery.getAmount() + matchUserTicket.get(0).getCount());
 
         try {
             lotteryRepository.save(lottery);
+            userTicketRepository.delete(matchUserTicket.get(0));
         } catch (Exception e) {
             throw new InternalServerException("Failed to sell lottery");
         }
